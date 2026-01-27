@@ -1,0 +1,31 @@
+# --- Python General ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Entornos Virtuales (Nunca se suben) ---
+venv/
+.venv/
+env/
+.env
+
+# --- IDEs (Configuraciones de tu editor) ---
+.vscode/
+.idea/
+
+# --- Archivos del Proyecto ---
+# Ignorar todos los archivos que caigan en uploads (Privacidad de clientes)
+uploads/*
+
+# ...Pero permitir que git sepa que la carpeta existe (ver nota abajo)
+!uploads/.gitkeep
+
+# --- Binarios / Ejecutables ---
+# Si decides compilarlo a .exe después, ignoramos las carpetas de compilación
+build/
+dist/
+*.spec
+
+# Opcional: Si quieres guardar SumatraPDF.exe en el repo para que sea portable
+# pon un # al principio de la siguiente línea. Si prefieres bajarlo manual, déjalo así.
+# SumatraPDF.exe

@@ -1,0 +1,11 @@
+# Framework Web y API
+Flask>=3.0.0
+Werkzeug>=3.0.0
+
+# Procesamiento de Imágenes y PDFs
+Pillow>=10.0.0
+fpdf2>=2.7.0
+img2pdf>=0.5.0
+
+# Interacción con Windows (Impresoras)
+pywin32>=306
