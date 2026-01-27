@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <title>Papelería Pro</title>
+    <style>
+        .loading {
+            display: none;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+        <aside class="aside">
+            <nav class="aside__nav">
+                <a href="/" class="aside__nav-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.48907C3 9.18048 3.14247 8.88917 3.38606 8.69972L11.3861 2.47749C11.7472 2.19663 12.2528 2.19663 12.6139 2.47749L20.6139 8.69972C20.8575 8.88917 21 9.18048 21 9.48907V20ZM19 19V9.97815L12 4.53371L5 9.97815V19H19Z">
+                        </path>
+                    </svg>
+                    Inicio
+                </a>
+                <a href="/img-to-pdf" class="aside__nav-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-images-icon lucide-images">
+                        <path d="m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16" />
+                        <path d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2" />
+                        <circle cx="13" cy="7" r="1" fill="currentColor" />
+                        <rect x="8" y="2" width="14" height="14" rx="2" />
+                    </svg>
+                    Convertir Imagenes a PDF
+                </a>
+            </nav>
+        </aside>
+        <main class="main">
+
+            <div class="card">
+
+                <h2 class="card-title">Convertir Imágenes a PDF</h2>
+                <p class="card-description">Sube tus imágenes y conviertelas a PDF</p>
+                <div class="form">
+                    <div class="form-item">
+                        <label for="type" class="card-label form-label">Tamaño de impresión:</label>
+                        <select id="layoutConfig" class="form-select" name="type">
+                            <option value="full">Carta Completa (Default)</option>
+                            <option value="half">Media Carta (Ahorro)</option>
+                            <option value="id_card">Tamaño Credencial (INE)</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label class="card-label form-label" for="size">Ubicacion de la imagen:</label>
+                        <select id="positionConfig" class="form-select" >
+                            <option value="center">Centro (Default)</option>
+                            <option value="top">Arriba (Inicio)</option>
+                            <option value="bottom">Abajo (Final)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-zone-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-cloud-upload-icon lucide-cloud-upload">
+                            <path d="M12 13v8" />
+                            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                            <path d="m8 17 4-4 4 4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="drop-zone-title">Subir imagen o imagenes</p>
+                        <span id="fileLabel">Toca para elegir archivos</span>
+                    </div>
+                    <input type="file" id="fileInput" multiple style="display:none" onchange="updateLabel()">
+                </div>
+
+                <button class="btn btn--primary btn--convert" onclick="procesarArchivos()" id="btnProcesar">Convertir a
+                    PDF</button>
+                <div class="loading" id="loadingMsg">⏳ Procesando... espera un momento</div>
+
+                <button id="btn-remove">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-trash-icon lucide-trash">
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+            </div>
+        </main>
+    </div>
+    <script>
+        const paths = ['/', '/img-to-pdf']
+        const buttonsNav = document.querySelectorAll('.aside__nav-item')
+        buttonsNav.forEach(btn => btn.classList.remove('active'))
+
+        const pathname = window.location.pathname
+        console.log(pathname)
+        const findIndexPathActive = paths.findIndex(path => path === pathname)
+        console.log(findIndexPathActive)
+        if (findIndexPathActive !== -1) {
+            buttonsNav[findIndexPathActive].classList.add('active')
+        }
+    </script>
+    <script>
+
+        const btnRemove = document.getElementById('btn-remove');
+        const input = document.getElementById('fileInput');
+        const layout = document.getElementById('layoutConfig');
+        const position = document.getElementById('positionConfig'); // <--- NUEVO
+        const btn = document.getElementById('btnProcesar');
+        const msg = document.getElementById('loadingMsg');
+        const fileLabel = document.getElementById('fileLabel');
+
+        btnRemove.addEventListener('click', function () {
+            if (input.files.length === 0) return
+            document.getElementById('fileInput').value = '';
+            showLabelDinamic();
+            btn.disabled = true;
+        });
+
+        function updateLabel() {
+            const input = document.getElementById('fileInput');
+            showLabelDinamic();
+        }
+
+        function showLabelDinamic() {
+            fileLabel.innerText = input.files.length > 0 ?
+                `${input.files.length} archivo(s) listos` : "Toca para elegir archivos";
+        }
+
+        async function procesarArchivos() {
+
+            if (input.files.length === 0) return alert("Selecciona algo primero.");
+
+            // UI Feedback
+            btn.disabled = true;
+            msg.style.display = 'block';
+
+            // Preparar datos para la API
+            const formData = new FormData();
+            
+            for (const file of input.files) {
+                formData.append('files[]', file);
+            }
+            formData.append('layout', layout.value);
+            formData.append('position', position.value); // <--- Lo enviamos a Python
+
+            try {
+                // Llamada a la API
+                const response = await fetch('/api/convertir', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Error en la conversión");
+                const nameFile = input.files[0].name.split('.')[0]
+                // Convertir respuesta a Blob (archivo) y descargar
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "imagen_a_pdf_" + nameFile + ".pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+            } catch (error) {
+                alert("Hubo un error: " + error.message);
+            } finally {
+                btn.disabled = false;
+                msg.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+
+
+</html>
