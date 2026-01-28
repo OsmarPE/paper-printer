@@ -5,16 +5,16 @@
 {% block title %}Doc a PDF - Papelería Pro{% endblock %}
 
 {% block content %}
-    <h2 class="main__title">Documentos a PDF</h2>
-    <p class="main__text">Convierte tareas de Word, Excel y PowerPoint sin que se mueva el texto</p>
 
-    <div class="document-form">
+    <div class="card">
+        <h2 class="card-title">Convertir Documentos a PDF</h2>
+        <p class="card-description">Convierte tareas de Word, Excel y PowerPoint sin que se mueva el texto</p>
         <div class="btn btn--secondary document-form-input" onclick="document.getElementById('docInput').click()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up-icon lucide-file-up"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
-             <span id="labelFile">Subir un archivo de Word, Excel o PowerPoint</span>
+             <span id="labelFile">Selecciona esta area para subir un archivo de Word, Excel o PowerPoint</span>
             <input type="file" id="docInput" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx" style="display:none" onchange="mostrarNombre()">
         </div>
-        <button class="btn btn--primary" onclick="convertirDocumento()">
+        <button class="btn btn--primary document-form-btn" onclick="convertirDocumento()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
             Convertir Ahora
         </button>

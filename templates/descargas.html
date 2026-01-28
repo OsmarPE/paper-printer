@@ -5,7 +5,7 @@
 {% block content %}
     <div class="header">
         <div>
-            <h2 class="main__title">Descargas</h2>
+            <h2 class="main__title">Imagenes Recientes</h2>
             <p class="main__text">Selecciona imágenes para convertirlas a PDF</p>
             <p class="main__counter" id="counter">0 seleccionados</p>
         </div>
@@ -44,7 +44,25 @@
         </div>
     </div>
 
+    <div class="gallery-modal" id="galleryModal">
+        <div class="gallery-content">
+            <img id="gallery-modal-img" src="http://127.0.0.1:5000/cdn/descargas/Mermaid%20Chart%20-%20Create%20complex,%20visual%20diagrams%20with%20text.-2026-01-22-174017.png" alt="">
+        </div>
+        <button class="gallery-modal-close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+
     <script>
+        const modal = document.querySelector('.gallery-modal');
+        const modalClose = document.querySelector('.gallery-modal-close');
+        const modalContent = document.querySelector('.gallery-content');
+        const modalImage = document.getElementById('gallery-modal-img');
+
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            modalImage.src = '';
+        });
         let seleccionados = new Set();
         // Guardamos el "estado" anterior para no redibujar si no hay cambios
         let lastChecksum = ""; 
@@ -56,8 +74,11 @@
             // CAMBIO AQUÍ: Usamos /thumbnail/ en el src
             // Agregamos un 'loading="lazy"' para mejorar aún más
             return `
-                <div class="img-card ${isSelected}" onclick="toggleSelect(this, '${img.nombre}')">
-                    <div class="check-circle ">
+                <div class="img-card ${isSelected}" >
+                    <div class="check-circle-view" onclick="event.stopPropagation(); toggleSelect(this.parentElement, '${img.nombre}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-focus-icon lucide-focus"><circle cx="12" cy="12" r="3"/><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+                        </div>
+                    <div class="check-circle " onclick="event.stopPropagation(); checkCircle(this.parentElement, '${img.nombre}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="m20 6-11 11-5-5"/></svg>
                     </div>
                     <img src="/thumbnail/${img.nombre}" loading="lazy" alt="${img.nombre}">
@@ -115,11 +136,17 @@
         }
 
         // 3. Lógica de Selección (Casi igual que antes)
-        function toggleSelect(elemento, nombre) {
+        async function toggleSelect(elemento, nombre) {
             // Nota: Como redibujamos el HTML, buscamos el elemento visualmente
             // pero la lógica real está en el Set 'seleccionados'
-            
-            if (seleccionados.has(nombre)) {
+            const pathImage = await fetch('/cdn/descargas/' + nombre).then(res => res.url);
+
+            modalImage.src = pathImage;
+            modal.classList.add('active');
+        }
+
+        function checkCircle(elemento, nombre) {
+              if (seleccionados.has(nombre)) {
                 seleccionados.delete(nombre);
                 elemento.classList.remove('selected');
             } else {
@@ -133,9 +160,19 @@
             document.getElementById('counter').innerText = seleccionados.size + " seleccionados";
         }
 
+        function changeStateImageCard(status = 'enabled') {
+            if (status === 'disabled') {
+                document.querySelectorAll('.img-card').forEach(card => card.classList.add('disabled'));
+                return;
+            }
+            document.querySelectorAll('.img-card').forEach(card => card.classList.remove('disabled'));
+        }
+
         // 4. Lógica de Envío (Igual que antes)
         async function generarPDF() {
             if (seleccionados.size === 0) return alert("Selecciona al menos una imagen");
+
+            changeStateImageCard('disabled');
 
             const btn = document.querySelector('button.btn-generate');
             const originalText = btn.innerText;
@@ -165,6 +202,7 @@
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
+                changeStateImageCard();
             }
         }
 
