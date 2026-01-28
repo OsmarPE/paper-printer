@@ -731,3 +731,8 @@ a {
     height: 1.5rem;
     color: rgba(255, 255, 255, 0.8);
 }
+
+.btn-remove-images:disabled{
+    opacity: .5;
+}
+

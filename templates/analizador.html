@@ -1,0 +1,224 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Inicio - Papelería Pro{% endblock %}
+
+{% block content %}
+    <style>
+ 
+  
+        .drop-zone:hover { background: #b2ebf2; }
+        
+        /* RESULTADO DEL ANÁLISIS */
+        .result-box {
+            display: none; /* Oculto al inicio */
+            background: #f5f5f5; padding: 20px; border-radius: 10px; margin-top: 20px;
+            animation: fadeIn 0.5s;
+        }
+        
+        .big-icon { font-size: 60px; display: block; margin-bottom: 10px; }
+        .file-type { font-weight: bold; font-size: 18px; color: #333; }
+        .file-msg { color: #666; margin-bottom: 20px; font-size: 14px; }
+        
+        .options-panel { margin: 15px 0; text-align: left; background: white; padding: 10px; border-radius: 5px; border: 1px solid #ddd;}
+        
+        .btn-convert { background: #4CAF50; color: white; }
+        .btn-convert:hover { background: #388E3C; }
+        .btn-reset { background: #90a4ae; color: white; margin-top: 10px; }
+
+        .card-analitic{
+            list-style: none;
+            display: grid;
+            gap: .5rem;
+            margin-top: 1rem;
+        }
+
+        .card-analitic-item{
+            font-size: 14px;
+            color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .card-analitic-item span{
+            font-weight: 600;
+            color: black;
+        }
+
+        .card-analitic-item svg{
+            width: 1rem;
+            height: 1rem;
+        }
+
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <div class="card">
+        <h2 class="card-title">Analizador Universal de Archivos</h2>
+        <p class="card-description">Sube el archivo para identificarlo y convertirlo a PDF.</p>
+
+        <button class="btn btn--secondary" onclick="document.getElementById('fileInput').click()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+            Subir Archivo
+        </button>
+        
+        <input type="file" id="fileInput" style="display:none" onchange="analizarArchivo()">
+        <div id="resultArea" class="result-box">
+            <span class="big-icon" id="resIcon">❓</span>
+            <div class="file-type" id="resType">Analizando...</div>
+            <p class="file-msg" id="resMsg">...</p>
+
+            <div id="imageOptions" style="display:none;" class="options-panel">
+                <label style="font-size:12px; font-weight:bold;">Ajuste de Imagen:</label>
+                <select id="layoutConfig" style="width:100%; padding:5px; margin-top:5px;">
+                    <option value="full">📄 Carta Completa</option>
+                    <option value="half">✂️ Media Carta</option>
+                    <option value="id_card">🪪 Credencial</option>
+                </select>
+            </div>
+
+        
+
+            <button id="btnAction" class="btn btn-convert" style="display:none;" onclick="ejecutarConversion()">
+                ✨ Convertir a PDF
+            </button>
+        </div>
+            <ul class="card-analitic">
+                <li class="card-analitic-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
+                    <span id="fileName">doc.docx</span>
+                </li>
+                <li class="card-analitic-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                    Tipo: <span id="fileType">Documento</span>
+                </li>
+                <li class="card-analitic-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                    Tamaño: <span id="fileSize">120 KB</span>
+                </li>
+                <li class="card-analitic-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                    Compatible con PDF: <span id="fileSize">SI</span>
+                </li>
+            </ul>
+            
+
+        <button onclick="location.reload()" class="btn btn-reset" style="display:none;" id="btnReset">🔄 Analizar otro</button>
+    </div>
+
+    <script>
+        let datosAnalisis = null; // Guardará la info que nos mande el servidor
+
+        async function analizarArchivo() {
+            const input = document.getElementById('fileInput');
+            if (input.files.length === 0) return;
+
+            // UI Feedback
+            document.getElementById('labelFile').innerText = "⏳ Identificando...";
+            document.getElementById('resultArea').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+
+            try {
+                // 1. Preguntar al servidor qué es esto
+                const res = await fetch('/api/identificar', { method: 'POST', body: formData });
+                datosAnalisis = await res.json();
+
+                mostrarResultado(datosAnalisis);
+                document.getElementById('labelFile').innerText = "✅ " + input.files[0].name;
+
+            } catch (e) {
+                alert("Error analizando archivo");
+            }
+        }
+
+        function mostrarResultado(data) {
+            const area = document.getElementById('resultArea');
+            const btn = document.getElementById('btnAction');
+            const imgOpts = document.getElementById('imageOptions');
+
+            // Llenar datos visuales
+            document.getElementById('resIcon').innerText = data.icon;
+            document.getElementById('resType').innerText = data.desc;
+            document.getElementById('resMsg').innerText = data.msg;
+
+            // Lógica de botones
+            if (data.convertible) {
+                btn.style.display = 'block';
+                btn.innerText = "✨ Convertir a PDF";
+            } else {
+                btn.style.display = 'none';
+            }
+
+            // Si es imagen, mostrar opciones de tamaño
+            if (data.tipo === 'imagen') {
+                imgOpts.style.display = 'block';
+            } else {
+                imgOpts.style.display = 'none';
+            }
+
+            // Mostrar todo
+            area.style.display = 'block';
+            document.getElementById('btnReset').style.display = 'block';
+        }
+
+        async function ejecutarConversion() {
+            if (!datosAnalisis || !datosAnalisis.convertible) return;
+
+            const input = document.getElementById('fileInput');
+            const btn = document.getElementById('btnAction');
+            
+            btn.disabled = true;
+            btn.innerText = "⏳ Procesando...";
+
+            const formData = new FormData();
+            formData.append('files[]', input.files[0]); // Para imagenes
+            formData.append('file', input.files[0]);    // Para documentos
+
+            // Si es imagen, agregamos el layout
+            if (datosAnalisis.tipo === 'imagen') {
+                formData.append('layout', document.getElementById('layoutConfig').value);
+                formData.append('position', 'center'); 
+            }
+
+            try {
+                // Usamos el endpoint que el servidor nos dijo que usaramos
+                const res = await fetch(datosAnalisis.endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    // Si el endpoint devuelve archivo directo (blob) o JSON con url
+                    const contentType = res.headers.get("content-type");
+                    
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        // Es JSON (como el de documentos)
+                        const json = await res.json();
+                        if (json.success) window.location.href = json.pdf_url;
+                        else alert("Error: " + json.error);
+                    } else {
+                        // Es Blob (como el de imágenes)
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = "Convertido.pdf";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                    }
+                    btn.innerText = "✅ ¡Listo!";
+                } else {
+                    alert("Error en la conversión");
+                }
+            } catch (e) {
+                alert("Error de conexión: " + e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+{% endblock %}

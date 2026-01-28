@@ -613,5 +613,95 @@ def api_imprimir_local():
 # en lugar de todo el bloque 'settings...', solo llama:
 # ejecutar_impresion(ruta_pdf, impresora, copias, rango, formato, modo_color)
 
+@app.route('/api/borrar_archivos_descargas', methods=['POST'])
+def api_borrar_archivos_descargas():
+    data = request.json
+    lista_nombres = data.get('archivos', [])
+    
+    if not lista_nombres:
+        return jsonify({"success": False, "msg": "No seleccionaste nada"}), 400
+
+    borrados = 0
+    errores = []
+
+    for nombre in lista_nombres:
+        # SEGURIDAD: basename quita cualquier ruta relativa (ej. ../windows)
+        # Solo permite el nombre del archivo final.
+        nombre_limpio = os.path.basename(nombre)
+        ruta_completa = os.path.join(DOWNLOADS_FOLDER, nombre_limpio)
+        
+        try:
+            if os.path.exists(ruta_completa):
+                os.remove(ruta_completa) # Borrado permanente
+                borrados += 1
+        except Exception as e:
+            print(f"Error borrando {nombre}: {e}")
+            errores.append(str(e))
+
+    return jsonify({
+        "success": True, 
+        "msg": f"Se eliminaron {borrados} archivos.",
+        "errores": errores
+    })
+# Definimos las categorías de archivos que aceptamos
+TIPOS_ACEPTADOS = {
+    'imagen': {
+        'ext': {'.jpg', '.jpeg', '.png', '.bmp', '.webp'},
+        'icon': '📸',
+        'desc': 'Imagen',
+        'convertible': True,
+        'endpoint': '/api/convertir' # Endpoint que ya creamos antes
+    },
+    'office': {
+        'ext': {'.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'},
+        'icon': '📝',
+        'desc': 'Documento Office',
+        'convertible': True,
+        'endpoint': '/api/convertir_documento' # Endpoint que ya creamos antes
+    },
+    'pdf': {
+        'ext': {'.pdf'},
+        'icon': '📑',
+        'desc': 'Archivo PDF',
+        'convertible': False, # Ya es PDF
+        'msg': 'Este archivo ya está listo para imprimir.'
+    }
+}
+
+@app.route('/api/identificar', methods=['POST'])
+def api_identificar():
+    if 'file' not in request.files:
+        return jsonify({"error": "No hay archivo"}), 400
+    
+    file = request.files['file']
+    filename = file.filename
+    ext = os.path.splitext(filename)[1].lower()
+    
+    # 1. Buscar en nuestras categorías
+    resultado = {
+        "tipo": "desconocido",
+        "icon": "❓",
+        "desc": "Archivo Desconocido",
+        "convertible": False,
+        "msg": "No se reconoce el formato o no es compatible."
+    }
+    
+    for key, info in TIPOS_ACEPTADOS.items():
+        if ext in info['ext']:
+            resultado = {
+                "tipo": key,
+                "icon": info['icon'],
+                "desc": info['desc'],
+                "convertible": info['convertible'],
+                "endpoint": info.get('endpoint', ''),
+                "msg": info.get('msg', 'Listo para convertir.')
+            }
+            break
+            
+    return jsonify(resultado)
+
+@app.route('/analizador')
+def pagina_analizador():
+    return render_template('analizador.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

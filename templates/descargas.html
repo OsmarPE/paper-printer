@@ -7,9 +7,13 @@
         <div>
             <h2 class="main__title">Imagenes Recientes</h2>
             <p class="main__text">Selecciona imágenes para convertirlas a PDF</p>
-            <p class="main__counter" id="counter">0 seleccionados</p>
+            <p class="main__counter" id="counter">Imagenes seleccionados: 0</p>
         </div>
         <div class="header-actions">
+            <button class="btn btn--secondary btn-remove-images" >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <div class="header-separator"></div>
             <div class="controls">
                 <select id="layout" class="form-select controls-select">
                     <option value="full">Carta Completa</option>
@@ -59,6 +63,9 @@
         const modalContent = document.querySelector('.gallery-content');
         const modalImage = document.getElementById('gallery-modal-img');
 
+        const btnRemoveImages = document.querySelector('.btn-remove-images');
+        btnRemoveImages.disabled = true;
+
         modalClose.addEventListener('click', () => {
             modal.classList.remove('active');
             modalImage.src = '';
@@ -66,6 +73,18 @@
         let seleccionados = new Set();
         // Guardamos el "estado" anterior para no redibujar si no hay cambios
         let lastChecksum = ""; 
+        
+        btnRemoveImages.addEventListener('click', async () => {
+            await borrarSeleccionados();
+        });
+
+        function changeStateBtnRemoveImages(state = 'active') {
+            if (state === 'active') {
+                btnRemoveImages.disabled = false;
+                return;
+            }
+            btnRemoveImages.disabled = true;
+        }
 
         // 1. Función que construye el HTML de una tarjeta
        function crearTarjetaHTML(img) {
@@ -146,6 +165,7 @@
         }
 
         function checkCircle(elemento, nombre) {
+            
               if (seleccionados.has(nombre)) {
                 seleccionados.delete(nombre);
                 elemento.classList.remove('selected');
@@ -154,10 +174,16 @@
                 elemento.classList.add('selected');
             }
             actualizarContador();
+            
+            if (seleccionados.size === 0) {
+                changeStateBtnRemoveImages('disabled');
+            } else {
+                changeStateBtnRemoveImages();
+            }
         }
 
         function actualizarContador() {
-            document.getElementById('counter').innerText = seleccionados.size + " seleccionados";
+            document.getElementById('counter').innerText = "Imagenes seleccionados: " + seleccionados.size;
         }
 
         function changeStateImageCard(status = 'enabled') {
@@ -166,6 +192,44 @@
                 return;
             }
             document.querySelectorAll('.img-card').forEach(card => card.classList.remove('disabled'));
+        }
+
+        async function borrarSeleccionados() {
+            if (seleccionados.size === 0) return alert("Selecciona imágenes para borrar.");
+
+            // 1. Confirmación de seguridad
+            const cantidad = seleccionados.size;
+            const confirmacion = confirm(`⚠️ ¿Estás segura de eliminar permanentemente ${cantidad} imagen(es)?\n\nEsta acción no se puede deshacer.`);
+            
+            if (!confirmacion) return;
+
+            try {
+                const res = await fetch('/api/borrar_archivos_descargas', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ archivos: Array.from(seleccionados) })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    // Éxito: Limpiamos la selección y forzamos actualización inmediata
+                    seleccionados.clear();
+                    actualizarContador();
+                    
+                    // Llamamos a actualizarGaleria inmediatamente para que desaparezcan visualmente
+                    // sin esperar los 3 segundos del reloj automático
+                    lastChecksum = ""; // Forzamos el redibujado reseteando el checksum
+                    await actualizarGaleria();
+            
+                } else {
+                    alert("Hubo un problema: " + data.msg);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión al intentar borrar.");
+            } finally {
+            }
         }
 
         // 4. Lógica de Envío (Igual que antes)
@@ -211,10 +275,10 @@
         // 1. Cargar inmediatamente al abrir
         actualizarGaleria();
 
-        document.addEventListener("visibilitychange", () => {
+        document.addEventListener("visibilitychange", async () => {
             console.log(document.visibilityState);
             if (document.visibilityState === "visible") {
-                actualizarGaleria();
+                await actualizarGaleria();
             }
         });
 
