@@ -13,7 +13,6 @@
         .result-box {
             display: none; /* Oculto al inicio */
             background: #f5f5f5; padding: 20px; border-radius: 10px; margin-top: 20px;
-            animation: fadeIn 0.5s;
         }
         
         .big-icon { font-size: 60px; display: block; margin-bottom: 10px; }
@@ -28,9 +27,13 @@
 
         .card-analitic{
             list-style: none;
-            display: grid;
+            display: none;
             gap: .5rem;
             margin-top: 1rem;
+        }
+
+        .card-analitic.active{
+            display: grid;
         }
 
         .card-analitic-item{
@@ -51,14 +54,25 @@
             height: 1rem;
         }
 
+        .card-analitic-btn,.card-analitic-btn-pdf{
+            width: 100%;
+        }
+        .card-analitic-btn-pdf{
+            display: none;
+        }
+
+        .card-analitic-actions{
+            margin-top: 2rem;
+            display: none;
+            gap: 1rem;
+        }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
     <div class="card">
         <h2 class="card-title">Analizador Universal de Archivos</h2>
         <p class="card-description">Sube el archivo para identificarlo y convertirlo a PDF.</p>
 
-        <button class="btn btn--secondary" onclick="document.getElementById('fileInput').click()">
+        <button class="btn btn--secondary card-analitic-btn" onclick="document.getElementById('fileInput').click()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
             Subir Archivo
         </button>
@@ -79,44 +93,59 @@
             </div>
 
         
-
-            <button id="btnAction" class="btn btn-convert" style="display:none;" onclick="ejecutarConversion()">
-                ✨ Convertir a PDF
-            </button>
         </div>
             <ul class="card-analitic">
-                <li class="card-analitic-item">
+                <li class="card-analitic-item" >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
-                    <span id="fileName">doc.docx</span>
+                    Nombre: <span id="fileName">doc.docx</span>
                 </li>
-                <li class="card-analitic-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                <li class="card-analitic-item" >
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-type-icon lucide-type"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></svg>
                     Tipo: <span id="fileType">Documento</span>
                 </li>
                 <li class="card-analitic-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler-icon lucide-ruler"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
                     Tamaño: <span id="fileSize">120 KB</span>
                 </li>
                 <li class="card-analitic-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
-                    Compatible con PDF: <span id="fileSize">SI</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                    Compatible con PDF: <span id="fileCompatible">SI</span>
                 </li>
             </ul>
-            
 
-        <button onclick="location.reload()" class="btn btn-reset" style="display:none;" id="btnReset">🔄 Analizar otro</button>
+            <div class="card-analitic-actions">
+                <button class="btn btn--primary card-analitic-btn-pdf" id="btnAction" onclick="ejecutarConversion()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
+                    Convertir a PDF
+                </button>
+    
+                <button onclick="location.reload()" class="btn btn--secondary btn-analitic-item" id="btnReset" style="display:none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up-icon lucide-file-up"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg>
+                    Subir otro archivo
+                </button>
+            </div>
     </div>
 
     <script>
+        
         let datosAnalisis = null; // Guardará la info que nos mande el servidor
+
+        const name = document.getElementById('fileName');
+        const type = document.getElementById('fileType');
+        const size = document.getElementById('fileSize');   
+        const compatible = document.getElementById('fileCompatible');
+
+        const actionsAnalitic = document.querySelector('.card-analitic-actions');
+        const cardAnalitic = document.querySelector('.card-analitic');
 
         async function analizarArchivo() {
             const input = document.getElementById('fileInput');
             if (input.files.length === 0) return;
 
             // UI Feedback
-            document.getElementById('labelFile').innerText = "⏳ Identificando...";
-            document.getElementById('resultArea').style.display = 'none';
+            //document.getElementById('labelFile').innerText = "⏳ Identificando...";
+            //document.getElementById('resultArea').style.display = 'none';
+            cardAnalitic.classList.remove('active');
 
             const formData = new FormData();
             formData.append('file', input.files[0]);
@@ -127,7 +156,7 @@
                 datosAnalisis = await res.json();
 
                 mostrarResultado(datosAnalisis);
-                document.getElementById('labelFile').innerText = "✅ " + input.files[0].name;
+                //document.getElementById('labelFile').innerText = "✅ " + input.files[0].name;
 
             } catch (e) {
                 alert("Error analizando archivo");
@@ -135,9 +164,15 @@
         }
 
         function mostrarResultado(data) {
+            console.log(data);
             const area = document.getElementById('resultArea');
             const btn = document.getElementById('btnAction');
             const imgOpts = document.getElementById('imageOptions');
+
+            name.innerText = data.desc;
+            type.innerText = data.tipo;
+            size.innerText = "120 KB";
+            compatible.innerText = data.convertible ? "SI" : "NO";
 
             // Llenar datos visuales
             document.getElementById('resIcon').innerText = data.icon;
@@ -147,9 +182,10 @@
             // Lógica de botones
             if (data.convertible) {
                 btn.style.display = 'block';
-                btn.innerText = "✨ Convertir a PDF";
+                actionsAnalitic.style.display = 'grid';
             } else {
                 btn.style.display = 'none';
+                actionsAnalitic.style.display = 'none';
             }
 
             // Si es imagen, mostrar opciones de tamaño
@@ -160,7 +196,8 @@
             }
 
             // Mostrar todo
-            area.style.display = 'block';
+            //area.style.display = 'block';
+            cardAnalitic.classList.add('active');
             document.getElementById('btnReset').style.display = 'block';
         }
 
