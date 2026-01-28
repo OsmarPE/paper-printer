@@ -1,0 +1,175 @@
+{% extends 'layout.html' %}
+
+{% block title %}Impresoras - Papelería Pro{% endblock %}
+
+{% block content %}
+
+<header class="header">
+    <div>
+        <h2 class="main__title">Impresoras disponibles en la Red</h2>
+        <p class="main__text">Centro de control de documentos e impresión</p>
+    </div>
+    <button onclick="location.reload()" class="btn btn-reload">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+        </svg>
+        Actualizar
+    </button>
+</header>
+
+
+<div class="main__grid">
+    {% for p in impresoras %}
+    <div class="printer-card {% if 'Lista' in p.estado %}status-ready{% else %}status-busy{% endif %}"
+        onclick="abrirModal('{{ p.nombre }}')">
+        <h3 class="printer-card-title">{{ p.nombre }}</h3>
+        <div class="printer-card-status">
+            {% if 'ready' in p.estado %}
+            <p class="printer-card-text">Estado: Lista</p>
+            {% else %}
+            <p class="printer-card-text">Estado: En espera / Ocupada</p>
+            {% endif %}
+
+            <span class="printer-card-badge {% if 'ready' in p.estado %}ready{% else %}pending{% endif %}"></span>
+        </div>
+        <div class="printer-card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-printer-icon lucide-printer">
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" />
+                <rect x="6" y="14" width="12" height="8" rx="1" />
+            </svg>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="modal-overlay" id="printModal">
+    <div class="modal">
+        <h2 class="modal-title" id="modalPrinterName">Configurar Impresión</h2>
+        <p class="modal-text">Selecciona un archivo PDF para imprimir</p>
+        <div class="mini-drop btn btn--secondary" onclick="document.getElementById('fileInput').click()" id="fileName">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-cloud-upload-icon lucide-cloud-upload">
+                <path d="M12 13v8" />
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                <path d="m8 17 4-4 4 4" />
+            </svg>
+            <span>Subir PDF</span>
+            <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="mostrarNombre()">
+        </div>
+        <div class="form-group">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex:1">
+                    <label class="form-label">Copias:</label>
+                    <input type="number" id="copies" value="1" min="1">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Color:</label>
+                    <select id="colorMode" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                        <option value="color">Color</option>
+                        <option value="monochrome">Blanco y Negro</option>
+                    </select>
+                </div>
+            </div>
+    
+            <div>
+                <label class="form-label">Tamaño de Papel:</label>
+                <select id="paperFormat" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                    <option value="Letter">📄 Carta (Letter)</option>
+                    <option value="Legal">📜 Oficio (Legal)</option>
+                    <option value="A4">A4 (Europeo)</option>
+                </select>
+            </div>
+    
+            <div>
+                <label class="form-label">Páginas (Ej: 1-3, 5):</label>
+                <input type="text" id="pages" placeholder="Dejar vacío para TODO">
+            </div>
+
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn--secondary" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn--primary" onclick="enviarImpresion()">Imprimir Ahora</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let impresoraSeleccionada = "";
+
+    function abrirModal(nombreImpresora) {
+        impresoraSeleccionada = nombreImpresora;
+        document.getElementById('modalPrinterName').innerText = "Imprimiendo en: " + nombreImpresora;
+        document.getElementById('printModal').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+        document.getElementById('printModal').style.display = 'none';
+        // Limpiar inputs
+        document.getElementById('fileInput').value = "";
+        document.getElementById('fileName').innerText = "Toca para elegir PDF";
+        document.getElementById('pages').value = "";
+        document.getElementById('copies').value = "1";
+    }
+
+    function mostrarNombre() {
+        const input = document.getElementById('fileInput');
+        if (input.files.length > 0) {
+            document.getElementById('fileName').innerText = "" + input.files[0].name;
+        }
+    }
+
+    async function enviarImpresion() {
+        const fileInput = document.getElementById('fileInput');
+
+        if (fileInput.files.length === 0) {
+            alert("¡Falta seleccionar el archivo PDF!");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('impresora', impresoraSeleccionada);
+        formData.append('copias', document.getElementById('copies').value);
+        formData.append('rango', document.getElementById('pages').value);
+
+        // NUEVOS DATOS
+        formData.append('formato', document.getElementById('paperFormat').value);
+        formData.append('color', document.getElementById('colorMode').value);
+
+        // UI Feedback
+        const btn = document.querySelector('.btn-print');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ Enviando...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/subir_y_imprimir', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert("¡Éxito! " + data.msg);
+                cerrarModal();
+            } else {
+                alert("Error: " + data.msg);
+            }
+        } catch (e) {
+            alert("Error de conexión");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

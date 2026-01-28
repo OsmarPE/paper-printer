@@ -1,11 +1,12 @@
 import os
 import subprocess
-from flask import Flask, request, send_file, jsonify, render_template
+from flask import Flask, request, send_file, jsonify, render_template,send_from_directory
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
 from PIL import Image
 import win32print
 import win32api
+import time
 
 app = Flask(__name__)
 
@@ -13,6 +14,9 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+DOWNLOADS_FOLDER = os.path.join(os.path.expanduser('~'), 'Downloads')
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}
 
 # RUTA LIBREOFFICE (Ajustar según tu PC)
 LIBREOFFICE_PATH = r"C:\Program Files\LibreOffice\program\soffice.exe"
@@ -166,7 +170,7 @@ def obtener_impresoras():
             
             # El estado es un bitmask (complejo), simplificamos:
             estado_code = info['Status']
-            estado_txt = "Lista 🟢" if estado_code == 0 else f"Atención/Ocupada ({estado_code}) 🟠"
+            estado_txt = "ready" if estado_code == 0 else f"pending"
             
             # Contar trabajos en cola
             jobs = info['cJobs']
@@ -200,12 +204,69 @@ def imprimir_silencioso(ruta_pdf, nombre_impresora):
 
 # --- NUEVAS RUTAS FLASK ---
 
-@app.route('/impresoras')
+@app.route('/prints')
 def pagina_impresoras():
     # Muestra el panel de gestión
     lista = obtener_impresoras()
     return render_template('impresoras.html', impresoras=lista)
 
+@app.route('/api/subir_y_imprimir', methods=['POST'])
+def api_subir_y_imprimir():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "msg": "No hay archivo"}), 400
+    
+    archivo = request.files['file']
+    impresora = request.form.get('impresora')
+    copias = request.form.get('copias', '1')
+    rango = request.form.get('rango', '')
+    
+    # NUEVOS PARÁMETROS
+    formato = request.form.get('formato', 'Letter') # Letter, Legal, A4
+    modo_color = request.form.get('color', 'color') # color, monochrome
+
+    if archivo.filename == '':
+        return jsonify({"success": False, "msg": "Nombre vacío"}), 400
+
+    filename = secure_filename(archivo.filename)
+    ruta_pdf = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    archivo.save(ruta_pdf)
+    
+    # CONSTRUCCIÓN DE SETTINGS PARA SUMATRA
+    # Sumatra usa comas para separar opciones: "2x,paper=Letter,color=monochrome"
+    settings = []
+    
+    # 1. Copias
+    settings.append(f"{copias}x")
+    
+    # 2. Rango de páginas
+    if rango and rango.strip():
+        settings.append(rango)
+        
+    # 3. Formato de Papel (Letter, Legal, A4, A3, Tabloid)
+    # Nota: 'Legal' es el estándar para Oficio en la mayoría de drivers
+    settings.append(f"paper={formato}")
+    
+    # 4. Modo de Color
+    settings.append(f"color={modo_color}")
+
+    # Unimos todo con comas
+    settings_str = ",".join(settings)
+
+    comando = [
+        SUMATRA_PATH,
+        "-print-to", impresora,
+        "-print-settings", settings_str,
+        "-silent",
+        ruta_pdf
+    ]
+    
+    print(f"Ejecutando: {comando}") # Para que veas en consola qué hace
+
+    try:
+        subprocess.run(comando, check=True)
+        return jsonify({"success": True, "msg": "Enviado a imprimir correctamente"})
+    except Exception as e:
+        return jsonify({"success": False, "msg": f"Error: {str(e)}"}), 500
 @app.route('/api/imprimir_directo', methods=['POST'])
 def api_imprimir_directo():
     data = request.json
@@ -223,6 +284,334 @@ def api_imprimir_directo():
         return jsonify({"success": True, "msg": f"Enviado a {nombre_impresora}"})
     else:
         return jsonify({"success": False, "msg": "Error al comunicar con la impresora"}), 500
+
+def obtener_imagenes_recientes():
+    """Devuelve lista de imágenes en Descargas ordenadas por fecha (más nuevas primero)"""
+    archivos = []
+    try:
+        # Escanear directorio
+        for entry in os.scandir(DOWNLOADS_FOLDER):
+            if entry.is_file():
+                ext = os.path.splitext(entry.name)[1].lower()
+                if ext in ALLOWED_EXTENSIONS:
+                    # Guardamos nombre y fecha para ordenar
+                    archivos.append({
+                        "nombre": entry.name,
+                        "fecha": entry.stat().st_mtime,
+                        "fecha_legible": time.ctime(entry.stat().st_mtime)
+                    })
+        
+        # Ordenar: Más nuevo al principio
+        archivos.sort(key=lambda x: x['fecha'], reverse=True)
+        return archivos
+    except Exception as e:
+        print(f"Error leyendo descargas: {e}")
+        return []
+
+# --- RUTAS NUEVAS ---
+
+@app.route('/download')
+def ver_descargas():
+    imagenes = obtener_imagenes_recientes()
+    return render_template('descargas.html', imagenes=imagenes)
+
+# ESTA RUTA ES CRUCIAL: Permite al HTML mostrar las imágenes de Windows
+@app.route('/cdn/descargas/<path:filename>')
+def servir_imagen_descargas(filename):
+    return send_from_directory(DOWNLOADS_FOLDER, filename)
+
+@app.route('/api/procesar_descargas', methods=['POST'])
+def api_procesar_descargas():
+    """
+    Recibe una lista de NOMBRES de archivos que ya están en Descargas,
+    los busca y genera el PDF usando tu función existente.
+    """
+    data = request.json
+    lista_nombres = data.get('archivos', [])
+    layout = data.get('layout', 'full')
+    position = data.get('position', 'center')
+    
+    if not lista_nombres:
+        return jsonify({"error": "No seleccionaste nada"}), 400
+
+    # Construir las rutas completas
+    rutas_completas = []
+    for nombre in lista_nombres:
+        ruta = os.path.join(DOWNLOADS_FOLDER, nombre)
+        if os.path.exists(ruta):
+            rutas_completas.append(ruta)
+    
+    if not rutas_completas:
+        return jsonify({"error": "No se encontraron los archivos"}), 404
+
+    try:
+        # REUTILIZAMOS TU FUNCIÓN 'crear_pdf_imagenes' (la que hicimos antes)
+        # Asegúrate de que esa función esté accesible aquí
+        ruta_pdf = crear_pdf_imagenes(rutas_completas, layout, position)
+        
+        # Devolvemos la URL para que el frontend descargue el PDF
+        # Ojo: necesitamos una ruta para descargar el PDF generado en 'uploads'
+        nombre_pdf = os.path.basename(ruta_pdf)
+        return jsonify({"success": True, "pdf_url": f"/bajar_pdf/{nombre_pdf}"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Ruta auxiliar para entregar el PDF generado
+@app.route('/bajar_pdf/<filename>')
+def bajar_pdf(filename):
+    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), as_attachment=True)
+
+# Agrega esto a tu app.py
+
+@app.route('/api/listar_descargas_json')
+def api_listar_descargas_json():
+    """Devuelve la lista de archivos en formato JSON para el auto-refresh"""
+    imagenes = obtener_imagenes_recientes()
+    return jsonify(imagenes)
+
+
+import io # <--- AGREGA ESTO AL INICIO CON TUS IMPORTS
+
+# ... (Tu código anterior) ...
+
+@app.route('/thumbnail/<path:filename>')
+def serve_thumbnail(filename):
+    """Genera una miniatura ligera al vuelo para que la galería no se trabe"""
+    ruta_completa = os.path.join(DOWNLOADS_FOLDER, filename)
+    
+    if not os.path.exists(ruta_completa):
+        return "", 404
+
+    try:
+        # Abrimos la imagen original
+        with Image.open(ruta_completa) as img:
+            # Convertimos a RGB si es necesario (para evitar errores con PNGs transparentes al guardar como JPEG)
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+                
+            # La reducimos a un tamaño máximo de 200x200 píxeles
+            img.thumbnail((200, 200))
+            
+            # La guardamos en memoria (RAM) no en disco, para ser rápidos
+            byte_io = io.BytesIO()
+            img.save(byte_io, 'JPEG', quality=70) # Calidad baja para vista previa rápida
+            byte_io.seek(0)
+            
+            return send_file(byte_io, mimetype='image/jpeg')
+            
+    except Exception as e:
+        print(f"Error thumbnail: {e}")
+        # Si falla (ej. archivo corrupto), mandamos un placeholder o nada
+        return "", 500
+
+import pythoncom
+import win32com.client
+
+# --- FUNCIONES DE CONVERSIÓN (MOTORES) ---
+
+def convertir_word_a_pdf(input_path, output_path):
+    pythoncom.CoInitialize()
+    word = win32com.client.Dispatch("Word.Application")
+    word.Visible = False
+    doc = None
+    try:
+        doc = word.Documents.Open(input_path)
+        # 17 = wdFormatPDF
+        doc.SaveAs(output_path, FileFormat=17)
+    finally:
+        if doc: doc.Close()
+        word.Quit()
+
+def convertir_excel_a_pdf(input_path, output_path):
+    pythoncom.CoInitialize()
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False # Evita popups de "Guardar cambios?"
+    wb = None
+    try:
+        wb = excel.Workbooks.Open(input_path)
+        # 0 = xlTypePDF
+        # Ajustamos todas las hojas para que se impriman
+        wb.ExportAsFixedFormat(0, output_path)
+    finally:
+        if wb: wb.Close(False)
+        excel.Quit()
+
+def convertir_ppt_a_pdf(input_path, output_path):
+    pythoncom.CoInitialize()
+    ppt = win32com.client.Dispatch("PowerPoint.Application")
+    # PPT a veces necesita arrancar visible minimizado para funcionar bien
+    # ppt.Visible = True 
+    pres = None
+    try:
+        pres = ppt.Presentations.Open(input_path, WithWindow=False)
+        # 32 = ppSaveAsPDF
+        pres.SaveAs(output_path, 32)
+    finally:
+        if pres: pres.Close()
+        ppt.Quit()
+
+# --- RUTA API PARA DOCUMENTOS ---
+
+@app.route('/api/convertir_documento', methods=['POST'])
+def api_convertir_documento():
+    if 'file' not in request.files:
+        return jsonify({"error": "No hay archivo"}), 400
+    
+    archivo = request.files['file']
+    if archivo.filename == '':
+        return jsonify({"error": "Nombre vacío"}), 400
+
+    # 1. Guardar archivo original (Word/Excel/PPT)
+    filename = secure_filename(archivo.filename)
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    archivo.save(input_path)
+    
+    # 2. Definir ruta de salida (PDF)
+    nombre_base = os.path.splitext(filename)[0]
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{nombre_base}.pdf")
+    
+    # 3. Detectar tipo y llamar al motor correcto
+    ext = os.path.splitext(filename)[1].lower()
+    
+    try:
+        if ext in ['.doc', '.docx']:
+            convertir_word_a_pdf(os.path.abspath(input_path), os.path.abspath(output_path))
+            
+        elif ext in ['.xls', '.xlsx']:
+            convertir_excel_a_pdf(os.path.abspath(input_path), os.path.abspath(output_path))
+            
+        elif ext in ['.ppt', '.pptx']:
+            convertir_ppt_a_pdf(os.path.abspath(input_path), os.path.abspath(output_path))
+            
+        else:
+            return jsonify({"error": "Formato no soportado. Solo Office."}), 400
+            
+        # Devolver URL para descargar
+        return jsonify({
+            "success": True, 
+            "pdf_url": f"/bajar_pdf/{nombre_base}.pdf"
+        })
+
+    except Exception as e:
+        print(f"Error conversión Office: {e}")
+        return jsonify({"error": f"Fallo al convertir: {str(e)}"}), 500
+
+# Ruta para servir la página (Frontend)
+@app.route('/doc-to-pdf')
+def pagina_documentos():
+    return render_template('documentos.html')
+
+@app.route('/api/remove_uploads', methods=['POST'])
+def api_remove_uploads():
+    folder = app.config['UPLOAD_FOLDER']
+    archivos_borrados = 0
+    errores = 0
+
+    # Listar todo lo que hay en uploads
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            # Verificar que sea un archivo (no borrar subcarpetas si las hubiera)
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path) # unlink es lo mismo que remove
+                archivos_borrados += 1
+        except Exception as e:
+            # Si el archivo está abierto por Word/Sumatra, fallará. Lo ignoramos.
+            print(f"No se pudo borrar {filename}: {e}")
+            errores += 1
+
+    return jsonify({
+        "success": True, 
+        "msg": f"Se eliminaron {archivos_borrados} archivos. ({errores} estaban en uso y se quedaron)."
+    })
+
+# ... (imports anteriores) ...
+
+# 1. FUNCIÓN REUTILIZABLE DE IMPRESIÓN (Refactorización)
+# Sacamos la lógica difícil a una función sola para usarla en todos lados
+def ejecutar_impresion(ruta_archivo, impresora, copias, rango, formato, color):
+    # Construir settings de Sumatra
+    settings = []
+    settings.append(f"{copias}x")
+    if rango and rango.strip(): settings.append(rango)
+    settings.append(f"paper={formato}")
+    settings.append(f"color={color}")
+    
+    settings_str = ",".join(settings)
+
+    comando = [
+        SUMATRA_PATH,
+        "-print-to", impresora,
+        "-print-settings", settings_str,
+        "-silent",
+        ruta_archivo
+    ]
+    
+    subprocess.run(comando, check=True)
+
+# 2. BUSCADOR DE PDFs
+def obtener_pdfs_descargas():
+    pdfs = []
+    try:
+        for entry in os.scandir(DOWNLOADS_FOLDER):
+            if entry.is_file() and entry.name.lower().endswith('.pdf'):
+                pdfs.append({
+                    "nombre": entry.name,
+                    "fecha": entry.stat().st_mtime,
+                    "fecha_legible": time.ctime(entry.stat().st_mtime),
+                    "size": f"{entry.stat().st_size / 1024:.1f} KB" # Tamaño en KB
+                })
+        # Ordenar: más recientes primero
+        pdfs.sort(key=lambda x: x['fecha'], reverse=True)
+    except Exception as e:
+        print(f"Error leyendo PDFs: {e}")
+    return pdfs
+
+# --- RUTAS NUEVAS ---
+
+@app.route('/pdfs')
+def pagina_pdfs():
+    return render_template('pdfs.html')
+
+@app.route('/api/listar_pdfs_json')
+def api_listar_pdfs():
+    """Para el auto-refresh de la lista"""
+    return jsonify(obtener_pdfs_descargas())
+
+@app.route('/api/imprimir_local', methods=['POST'])
+def api_imprimir_local():
+    """
+    Imprime un archivo que YA existe en Descargas (sin subirlo de nuevo).
+    """
+    data = request.json
+    nombre_archivo = data.get('archivo')
+    impresora = data.get('impresora')
+    
+    # Validar que exista
+    ruta_completa = os.path.join(DOWNLOADS_FOLDER, nombre_archivo)
+    if not os.path.exists(ruta_completa):
+        return jsonify({"success": False, "msg": "El archivo ya no existe"}), 404
+
+    try:
+        ejecutar_impresion(
+            ruta_completa,
+            impresora,
+            data.get('copias', '1'),
+            data.get('rango', ''),
+            data.get('formato', 'Letter'),
+            data.get('color', 'color')
+        )
+        return jsonify({"success": True, "msg": "Enviado a impresora"})
+    except Exception as e:
+        return jsonify({"success": False, "msg": f"Error: {str(e)}"}), 500
+
+# IMPORTANTE: Modifica tu ruta anterior 'api_subir_y_imprimir' para usar la nueva función
+# (Solo te pongo el cambio clave para que no repitas código)
+# ... dentro de api_subir_y_imprimir ...
+# en lugar de todo el bloque 'settings...', solo llama:
+# ejecutar_impresion(ruta_pdf, impresora, copias, rango, formato, modo_color)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&display=swap');
 
 * {
     margin: 0;
@@ -11,7 +11,7 @@
 }
 
 body {
-    font-family: 'Inconsolata', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 button {
@@ -22,9 +22,8 @@ button {
     border: 0;
 }
 
-label {
-    display: inline-block;
-
+select,input{
+    font-family: inherit;
 }
 
 a {
@@ -52,8 +51,9 @@ a {
 .aside__nav-item {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: .75rem;
     padding: .5rem 1rem;
+    font-size: .875rem;
     border-radius: 5px;
     color: rgba(0, 0, 0, 0.6);
     transition: all .2s ease-in-out;
@@ -81,9 +81,8 @@ a {
 
 .main__title {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: .25rem;
-    color: var(--color-primary);
 }
 
 .main__text {
@@ -129,26 +128,44 @@ a {
 }
 
 .btn {
-    padding: 1rem;
+    padding: .75rem 1.25rem;
     border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: .875rem;
+    font-weight: 500;
     transition: all .4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
 }
 
+.btn svg{
+    width: 1rem;
+    height: 1rem;
+}
 
 .btn--primary {
     background: var(--color-primary);
     color: white;
 }
 
-.btn:hover {
+.btn--primary:hover {
     opacity: .7;
 }
 
 .btn--convert {
     margin-top: 1.5rem;
     width: 100%;
+}
+.btn--secondary{
+    color: black;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+.btn--secondary:hover{
+    background-color: rgba(0, 0, 0, 0.01);
 }
 
 .card {
@@ -158,13 +175,13 @@ a {
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     width: 650px;
-    margin: 5rem auto 0;
+    margin: 1rem auto 0;
 }
 
+
 .card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
 
 }
 
@@ -181,8 +198,9 @@ a {
 
 .form-label {
     margin-bottom: .25rem;
-    color: rgba(0, 0, 0, 0.75);
+    color: rgba(0, 0, 0, 0.5);
     font-size: .875rem;
+    display: inline-block;
 }
 
 /* Estilo del Dropdown */
@@ -270,4 +288,347 @@ a {
 }
 #btn-remove:hover {
     background-color: rgba(194, 123, 92, 0.1);
+}
+  
+.loading {
+    display: none;
+    margin-top: 10px;
+
+}
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.header-actions{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.header-separator{
+    width: 1px;
+    height: 1.5rem;
+    background: rgba(0, 0, 0, 0.1);
+
+}
+.main__counter{
+    margin-top: 1rem;
+    color: rgba(0, 0, 0, 0.7);
+    font-size: .875rem;
+    margin-top: .5rem;
+}
+.controls-select{
+    min-width: 160px;
+}
+
+.btn-reload{
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: black;
+    padding: .75rem 1rem;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    transition: all .2s ease-in-out;
+}
+
+.btn-reload svg{
+    width: 1rem;
+    height: 1rem;
+}
+
+.btn-reload svg path{
+    transition: all .2s ease-in-out;
+}
+
+.btn-reload:hover{
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-reload:hover svg path{
+    color: white;
+}
+
+ /* Grid de Impresoras */
+ .grid {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 20px;
+     justify-content: center;
+ }
+ .printer-card {
+     background: white;
+     padding: 20px;
+     border-radius: 6px;
+     box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+     cursor: pointer;
+     transition: transform 0.2s;
+     position: relative;
+     min-height: 150px;
+ }
+ .printer-card:hover {
+     transform: translateY(-1px);
+     border-top-width: 12px;
+ }
+
+ .printer-card-status{
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+ }
+
+ .printer-card-badge{
+     width: .375rem;
+     height: .375rem;
+     border-radius: 50%;
+     display: flex;
+ }
+
+.printer-card-badge.ready{
+    background: #28a745;
+}
+.printer-card-badge.pending{
+    background: #dc3545;
+}
+
+
+ .printer-card-icon{
+     position: absolute;
+     top: 20px;
+     right: 20px;
+ }
+ .printer-card-icon svg{
+     width: 1rem;
+     height: 1rem;
+ }
+
+ .printer-card-title{
+     font-size: 1rem;
+ }
+
+ .printer-card-text{
+     font-size: .75rem;
+     color: rgba(0, 0, 0, 0.6);
+ }
+
+ /* MODAL (Ventana emergente de configuración) */
+ .modal-overlay {
+     display: none;
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background: rgba(255, 255, 255, 0.1);
+     justify-content: center;
+     align-items: center;
+     z-index: 1000;
+     backdrop-filter: blur(5px);
+ }
+
+ .modal {
+     background: white;
+     padding: 30px;
+     border-radius: 15px;
+     width: 600px;
+     animation: slideIn 0.3s;
+     border: 1px solid rgba(0, 0, 0, 0.1);
+ }
+ @keyframes slideIn {
+     from {
+         transform: translateY(-10px);
+         opacity: 0;
+     
+     to {
+         transform: translateY(0);
+         opacity: 1;
+     }
+    }
+}
+ 
+ /* Inputs del formulario */
+ .form-group {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+ }
+ label {
+     margin-bottom: 4px;
+     font-weight: 400;
+ }
+ input[type="text"],
+ input[type="number"] {
+     width: 100%;
+     padding: 10px;
+     border: 1px solid #ddd;
+     border-radius: 5px;
+     box-sizing: border-box;
+ }
+ /* Zona de carga mini */
+ .mini-drop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    cursor: pointer;
+ }
+  .mini-drop svg{
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+ .modal-title{
+     font-size: 1.125rem;
+     font-weight: 600;
+     margin-bottom: .25rem;
+ }
+
+ .modal-text{
+     font-size: .875rem;
+     color: rgba(0, 0, 0, 0.6);
+     margin-bottom: 1rem;
+ }
+
+ .modal-actions{
+     display: flex;
+     gap: 1rem;
+     margin-top: 1rem;
+     justify-content: flex-end;
+     align-items: center;
+ }
+
+ .controls { 
+    display: flex; 
+    gap: 1rem; 
+    align-items: center; 
+}
+  
+        /* GRID DE FOTOS */
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+        
+.img-card {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
+    cursor: pointer;
+    padding: .25rem;
+    height: 120px;
+}
+        
+        
+/* Estilo cuando está seleccionada */
+.img-card.selected {
+    border-color: var(--color-primary);
+    background-color: #c27b5c15;
+}
+
+.img-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.img-card:hover{
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.img-name {
+    font-size: 10px;
+    padding: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+}
+
+.img-card-content{
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: .25rem .5rem .25rem;
+    background-image: linear-gradient( to bottom, transparent, rgba(255, 255, 255, 0.1));
+    backdrop-filter: blur(1px);
+}
+
+/* Checkbox visual */
+.check-circle {
+    position: absolute; 
+    top: .75rem; 
+    right: .75rem;
+    width: 20px; height: 20px;
+    background: transparent;
+    border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.check-circle svg{
+    display: none;
+    width: .75rem;
+    height: .75rem;
+}
+.selected .check-circle {
+    background: var(--color-primary); 
+    border-color: var(--color-primary);
+}
+
+.selected .check-circle svg{
+    display: block;
+    color: white;
+}
+
+.loading{
+    align-items: center;
+    gap: .5rem;
+    color: rgba(0, 0, 0, 0.5);
+    font-size: .75rem;
+}
+
+.loading-icon{
+    width: 1rem;
+    height: 1rem;
+    color: rgba(0, 0, 0, 0.5);
+    animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+.document-form{
+    display: grid;
+    gap: 1rem;
+    margin: 2rem auto 0;
+    max-width: 400px;
+}
+
+.document-form-input{
+    height: 100px;
+}
+
+.document-status{
+    margin-top: 1rem;
+    align-items: center;
+    justify-content: center;
+    display: none;
+    font-size: .75rem;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.document-status.active{
+    display: flex;
 }

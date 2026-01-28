@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>{% block title %}Papelería Pro{% endblock %}</title>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="aside">
+        <nav class="aside__nav">    
+            <a href="/" class="aside__nav-item {{ 'active' if request.path == '/' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9.48907C3 9.18048 3.14247 8.88917 3.38606 8.69972L11.3861 2.47749C11.7472 2.19663 12.2528 2.19663 12.6139 2.47749L20.6139 8.69972C20.8575 8.88917 21 9.18048 21 9.48907V20ZM19 19V9.97815L12 4.53371L5 9.97815V19H19Z"></path></svg>
+                Inicio
+            </a>    
+            <a href="/img-to-pdf" class="aside__nav-item {{ 'active' if request.path == '/img-to-pdf' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16"/><path d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2"/><circle cx="13" cy="7" r="1" fill="currentColor"/><rect x="8" y="2" width="14" height="14" rx="2"/></svg>
+                Convertir Imagenes a PDF
+            </a>
+            <a href="/prints" class="aside__nav-item {{ 'active' if request.path == '/prints' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+                Impresoras
+            </a> 
+            <a href="/download" class="aside__nav-item {{ 'active' if request.path == '/download' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg>
+                Descargas
+            </a>  
+            <a href="/doc-to-pdf" class="aside__nav-item {{ 'active' if request.path == '/doc-to-pdf' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+                Doc a PDF
+            </a>
+            <a href="/pdfs" class="aside__nav-item {{ 'active' if request.path == '/doc-to-pdf' else '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
+                Documentos PDF
+            </a>  
+        </nav>
+    </aside>
+    
+    <main class="main">
+        {% block content %}
+        {% endblock %}
+    </main>
+</div>
+</body>
+
+<script>
+    const paths = ['/', '/img-to-pdf', '/prints', '/download', '/doc-to-pdf']
+    const buttonsNav = document.querySelectorAll('.aside__nav-item')
+    buttonsNav.forEach(btn => btn.classList.remove('active'))
+
+    const pathname = window.location.pathname
+    console.log(pathname)
+    const findIndexPathActive = paths.findIndex(path => path === pathname)
+    console.log(findIndexPathActive)
+    if (findIndexPathActive !== -1) {
+        buttonsNav[findIndexPathActive].classList.add('active')
+    }
+</script>
+</html>

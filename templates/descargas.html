@@ -1,0 +1,186 @@
+{% extends 'layout.html' %}
+
+{% block title %}Descargas - Papelería Pro{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h2 class="main__title">Descargas</h2>
+            <p class="main__text">Selecciona imágenes para convertirlas a PDF</p>
+            <p class="main__counter" id="counter">0 seleccionados</p>
+        </div>
+        <div class="header-actions">
+            <div class="controls">
+                <select id="layout" class="form-select controls-select">
+                    <option value="full">Carta Completa</option>
+                    <option value="half">Media Carta</option>
+                    <option value="id_card">Credencial (INE)</option>
+                </select>
+                
+                <select id="position" class="form-select controls-select">
+                    <option value="center">Centro</option>
+                    <option value="top">Arriba</option>
+                    <option value="bottom">Abajo</option>
+                </select>
+            </div>
+            <div class="header-separator"></div>
+          <button class="btn btn--secondary" onclick="actualizarGaleria()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            Actualizar
+        </button>
+          <button class="btn btn--primary btn-generate" onclick="generarPDF()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+            Convertir a PDF
+        </button>
+        </div>
+    </div>
+
+
+
+    <div class="gallery" id="galleryContainer">
+        <div class="loading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle-icon lucide-loader-circle loading-icon"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <span class="loading-text">Cargando archivos...</span>
+        </div>
+    </div>
+
+    <script>
+        let seleccionados = new Set();
+        // Guardamos el "estado" anterior para no redibujar si no hay cambios
+        let lastChecksum = ""; 
+
+        // 1. Función que construye el HTML de una tarjeta
+       function crearTarjetaHTML(img) {
+            const isSelected = seleccionados.has(img.nombre) ? 'selected' : '';
+            
+            // CAMBIO AQUÍ: Usamos /thumbnail/ en el src
+            // Agregamos un 'loading="lazy"' para mejorar aún más
+            return `
+                <div class="img-card ${isSelected}" onclick="toggleSelect(this, '${img.nombre}')">
+                    <div class="check-circle ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="m20 6-11 11-5-5"/></svg>
+                    </div>
+                    <img src="/thumbnail/${img.nombre}" loading="lazy" alt="${img.nombre}">
+                    <div class="img-card-content">
+                        <div class="img-name" title="${img.nombre}">${img.nombre}</div>
+                    </div>
+                    
+                </div>
+            `;
+        }
+
+        // 2. Función MAESTRA de actualización
+        async function actualizarGaleria() {
+            try {
+                const response = await fetch('/api/listar_descargas_json');
+                const imagenes = await response.json();
+
+                // Truco: Creamos una firma simple de los datos para ver si algo cambió
+                // Si la lista de nombres es idéntica a la anterior, NO hacemos nada (ahorra recursos)
+                const currentChecksum = JSON.stringify(imagenes.map(i => i.nombre));
+                
+                if (currentChecksum === lastChecksum) {
+                    return; // No hay archivos nuevos, no tocamos el DOM
+                }
+                
+                lastChecksum = currentChecksum;
+                const container = document.getElementById('galleryContainer');
+                
+                if (imagenes.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; width:100%; color:#999;">No hay imágenes recientes.</p>';
+                    return;
+                }
+
+                // Reconstruimos la galería manteniendo las selecciones
+                let htmlAcumulado = '';
+                imagenes.forEach(img => {
+                    htmlAcumulado += crearTarjetaHTML(img);
+                });
+
+                container.innerHTML = htmlAcumulado;
+
+                // Limpieza: Si había un archivo seleccionado que ya se borró de la carpeta,
+                // lo quitamos de nuestro Set de seleccionados.
+                const nombresActuales = new Set(imagenes.map(i => i.nombre));
+                seleccionados.forEach(nombre => {
+                    if (!nombresActuales.has(nombre)) {
+                        seleccionados.delete(nombre);
+                    }
+                });
+                actualizarContador();
+
+            } catch (error) {
+                console.error("Error actualizando galería:", error);
+            }
+        }
+
+        // 3. Lógica de Selección (Casi igual que antes)
+        function toggleSelect(elemento, nombre) {
+            // Nota: Como redibujamos el HTML, buscamos el elemento visualmente
+            // pero la lógica real está en el Set 'seleccionados'
+            
+            if (seleccionados.has(nombre)) {
+                seleccionados.delete(nombre);
+                elemento.classList.remove('selected');
+            } else {
+                seleccionados.add(nombre);
+                elemento.classList.add('selected');
+            }
+            actualizarContador();
+        }
+
+        function actualizarContador() {
+            document.getElementById('counter').innerText = seleccionados.size + " seleccionados";
+        }
+
+        // 4. Lógica de Envío (Igual que antes)
+        async function generarPDF() {
+            if (seleccionados.size === 0) return alert("Selecciona al menos una imagen");
+
+            const btn = document.querySelector('button.btn-generate');
+            const originalText = btn.innerText;
+            btn.innerText = `Generando PDF...`;
+            btn.disabled = true;
+
+            const datos = {
+                archivos: Array.from(seleccionados),
+                layout: document.getElementById('layout').value,
+                position: document.getElementById('position').value
+            };
+
+            try {
+                const res = await fetch('/api/procesar_descargas', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(datos)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.pdf_url;
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (e) {
+                alert("Error de conexión");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- INICIAR EL AUTO-REFRESH ---
+        
+        // 1. Cargar inmediatamente al abrir
+        actualizarGaleria();
+
+        document.addEventListener("visibilitychange", () => {
+            console.log(document.visibilityState);
+            if (document.visibilityState === "visible") {
+                actualizarGaleria();
+            }
+        });
+
+
+    </script>
+
+{% endblock %}

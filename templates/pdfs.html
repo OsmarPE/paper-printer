@@ -1,0 +1,235 @@
+{% extends 'layout.html' %}
+
+{% block title %}Inicio - Papelería Pro{% endblock %}
+
+{% block content %}
+  <style> 
+    
+        .icon-pdf { 
+            width: 2.25rem; height: 2.25rem; margin-right: 10px; display: flex; align-items: center; justify-content: center; 
+            background: transparent; border-radius: 5px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
+        }
+
+        .icon-pdf svg { width: 1rem; height: 1rem;}
+    
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: white; padding: 30px; border-radius: 15px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
+        select, input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-modal { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #listaPdfs{
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .pdf-item{
+            padding: 1.25rem;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        
+        }
+        .pdf-item-actions{
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 2rem;
+        }
+        .pdf-item-name{
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: .25rem;
+        }
+
+        .pdf-item-info{
+            font-size: .875rem;
+            color: rgba(0,0,0,0.5);
+        }
+
+    </style>
+     <h2 class="main__title">Documentos PDF</h2>
+    <p class="main__text">Documentos disponibles en Descargas</p>
+
+   
+    <div id="listaPdfs">
+        <tr><td colspan="2" style="text-align:center; padding:20px;">Cargando...</td></tr>
+    </div>
+
+    <div class="modal-overlay" id="printModal">
+        <div class="modal">
+            <h2 style="margin-top:0;">🖨️ Configurar Impresión</h2>
+            <p id="archivoSeleccionado" style="color:#666; font-size:13px; word-break:break-all;"></p>
+            
+            <div class="form-group">
+                <label>Impresora:</label>
+                <select id="printerSelect">
+                    <option value="">Cargando impresoras...</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1">
+                    <label>Copias:</label>
+                    <input type="number" id="copies" value="1" min="1">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>Color:</label>
+                    <select id="colorMode">
+                        <option value="monochrome">⚫ B/N</option>
+                        <option value="color">🎨 Color</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Páginas (Ej: 1-5):</label>
+                <input type="text" id="pages" placeholder="Todo">
+            </div>
+
+            <button class="btn-modal" style="background:#2e7d32; color:white;" onclick="confirmarImpresion()">✅ Imprimir</button>
+            <button class="btn-modal" style="background:#ccc; margin-top:5px;" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let archivoActual = "";
+        let impresorasCache = [];
+
+        // 1. Cargar Lista de PDFs (Auto-refresh)
+        async function cargarPdfs() {
+            try {
+                const res = await fetch('/api/listar_pdfs_json');
+                const pdfs = await res.json();
+                
+                const tbody = document.getElementById('listaPdfs');
+                
+                if(pdfs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">No hay PDFs recientes</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                pdfs.forEach(pdf => {
+                    html += `
+                        <div class="pdf-item">
+                            <div>
+                                <div style="display:flex; align-items:center;">
+                                    <span class="icon-pdf">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>    
+                                    </span>
+                                    <div>
+                                        <div class="pdf-item-name">${pdf.nombre}</div>
+                                        <div class="pdf-item-info">${pdf.fecha_legible} • ${pdf.size}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pdf-item-actions">
+                                <a href="/cdn/descargas/${pdf.nombre}" target="_blank" class="btn btn--secondary">Ver</a>
+                                
+                                <button onclick="abrirImpresion('${pdf.nombre}')" class="btn btn--primary">Imprimir</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } catch (e) { console.error("Error loading PDFs", e); }
+        }
+
+        // 2. Cargar Impresoras (Una sola vez al inicio)
+        async function cargarImpresoras() {
+            // Nota: Aquí podrías crear un endpoint simple que devuelva solo nombres de impresoras
+            // Por ahora, asumiremos que usamos el endpoint /impresoras pero hay que parsear el HTML
+            // MEJOR: Creamos un endpoint JSON rápido en app.py si no existe, o lo simulamos
+            // TRUCO RÁPIDO: Copia los nombres de tus impresoras aquí si no quieres hacer otro endpoint
+            // O usa el endpoint que ya tenías si lo adaptas a JSON.
+            
+            // Para que funcione YA, vamos a hacer un fetch al HTML de impresoras y extraer nombres (chapuza funcional)
+            // O mejor, agrega este endpoint rápido en app.py:
+            /* @app.route('/api/lista_impresoras_simple')
+               def lista_simple():
+                   return jsonify([p['nombre'] for p in obtener_impresoras()])
+            */
+            
+            // Suponiendo que agregaste ese endpoint arriba o hardcodeamos para probar:
+             impresorasCache = ["EPSON L3150 Series", "Microsoft Print to PDF"]; // <--- EJEMPLO, REEMPLAZAR CON FETCH
+             
+             // Si quieres hacerlo dinámico real, agrega el endpoint JSON en el backend.
+        }
+
+        function abrirImpresion(nombre) {
+            archivoActual = nombre;
+            document.getElementById('archivoSeleccionado').innerText = nombre;
+            
+            // Llenar select de impresoras
+            const select = document.getElementById('printerSelect');
+            // Aquí deberías usar 'impresorasCache' real
+            // Como no tenemos el endpoint JSON hecho, vamos a pedirle al usuario que escriba el nombre O
+            // Si usaste el código anterior de Win32, podemos inyectar las impresoras desde Python al renderizar la plantilla HTML
+            // (Ver abajo la corrección en Python)
+        }
+        
+        // CORRECCIÓN PARA IMPRESORAS: 
+        // Vamos a inyectar las impresoras desde el servidor al cargar la página.
+        // Ver paso 3 abajo.
+
+        function cerrarModal() {
+            document.getElementById('printModal').style.display = 'none';
+        }
+
+        async function confirmarImpresion() {
+            const btn = document.querySelector('.btn-modal');
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+
+            const datos = {
+                archivo: archivoActual,
+                impresora: document.getElementById('printerSelect').value,
+                copias: document.getElementById('copies').value,
+                color: document.getElementById('colorMode').value,
+                rango: document.getElementById('pages').value
+            };
+
+            try {
+                const res = await fetch('/api/imprimir_local', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(datos)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert("✅ Enviado correctamente");
+                    cerrarModal();
+                } else {
+                    alert("❌ Error: " + data.msg);
+                }
+            } catch (e) {
+                alert("Error de conexión");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "✅ Imprimir";
+            }
+        }
+
+        // Init
+        cargarPdfs();
+        setInterval(cargarPdfs, 5000); // Refrescar cada 5s
+
+        // Lógica para abrir modal (pegamento visual)
+        window.abrirImpresion = function(nombre) {
+            archivoActual = nombre;
+            document.getElementById('archivoSeleccionado').innerText = nombre;
+            document.getElementById('printModal').style.display = 'flex';
+        }
+    </script>
+
+{% endblock %}
+
