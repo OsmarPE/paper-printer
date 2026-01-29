@@ -24,7 +24,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
                 Impresoras
             </a> 
-            <a href="/download" class="aside__nav-item {{ 'active' if request.path == '/download' else '' }}">
+            <a href="/images" class="aside__nav-item {{ 'active' if request.path == '/download' else '' }}">
                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-icon lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                 Imagenes
             </a>  
@@ -36,7 +36,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
                 Documentos PDF
             </a>  
-            <a href="/analizador" class="aside__nav-item {{ 'active' if request.path == '/doc-to-pdf' else '' }}">
+            <a href="/analitic-type-img" class="aside__nav-item {{ 'active' if request.path == '/doc-to-pdf' else '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-type-corner-icon lucide-file-type-corner"><path d="M12 22h6a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v6"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M3 16v-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5V16"/><path d="M6 22h2"/><path d="M7 14v8"/></svg>
                 Analizar Tipo de Archivo
             </a> 
@@ -51,7 +51,7 @@
 </body>
 
 <script>
-    const paths = ['/', '/img-to-pdf', '/prints', '/download', '/doc-to-pdf', '/pdfs']
+    const paths = ['/', '/img-to-pdf', '/prints', '/images', '/doc-to-pdf', '/pdfs', '/analitic-type-img']
     const buttonsNav = document.querySelectorAll('.aside__nav-item')
     buttonsNav.forEach(btn => btn.classList.remove('active'))
 

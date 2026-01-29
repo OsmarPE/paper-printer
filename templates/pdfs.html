@@ -23,18 +23,21 @@
         .btn-modal { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
         #listaPdfs{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            /* grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); */
             gap: 1rem;
             margin-top: 2rem;
         }
         .pdf-item{
-            padding: 1.25rem;
+            padding: .75rem;
             border-radius: 8px;
             background: white;
             box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
             transition: all 0.4s ease;
             cursor: pointer;
             border: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         
         }
         .pdf-item-actions{
@@ -42,7 +45,6 @@
             gap: 1rem;
             justify-content: flex-end;
             align-items: center;
-            margin-top: 2rem;
         }
         .pdf-item-name{
             font-size: 1rem;
@@ -156,17 +158,30 @@
 
                     return { date: times.split(',')[0], time: times.split(',')[1] };
 
+                }
 
+                function getHora12h(time) {
+                    let horas = time.split(':')[0];
+                    let minutos = time.split(':')[1];
+
+                    const ampm = horas >= 12 ? 'PM' : 'AM';
+
+                    horas = horas % 12;
+                    horas = horas ? horas : 12; // si es 0 → 12
+
+                    minutos = minutos.toString().padStart(2, '0');
+
+                    return `${horas}:${minutos} ${ampm}`;
                 }
 
                 pdfs.forEach(pdf => {
                     html += `
                         <div class="pdf-item">
-                            <div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="icon-pdf">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>    
+                                </span>
                                 <div style="display:flex; align-items:center;">
-                                    <span class="icon-pdf">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>    
-                                    </span>
                                     <div>
                                         <div class="pdf-item-name">${pdf.nombre}</div>
                                         <div class="pdf-item-info">  
@@ -177,7 +192,7 @@
                                             • 
                                             <div class="pdf-item-info-item">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock4-icon lucide-clock-4"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
-                                            ${formatDateTime(pdf.fecha).time}
+                                            ${ getHora12h(formatDateTime(pdf.fecha).time) }
                                             </div>
                                             •  
                                             <div class="pdf-item-info-item">
@@ -188,8 +203,10 @@
                                 </div>
                             </div>
                             <div class="pdf-item-actions">
+                                <button class="btn btn--secondary" id="btn-remove-action" onclick="removePdf('${pdf.nombre}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3V3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1"/><path d="M15.555.555A.5.5.0 .999.778.778l-.778-.778z"/></svg>
+                                </button>
                                 <a href="/cdn/descargas/${pdf.nombre}" target="_blank" class="btn btn--secondary">Ver</a>
-                                
                                 <button onclick="abrirImpresion('${pdf.nombre}')" class="btn btn--primary">Imprimir</button>
                             </div>
                         </div>
@@ -197,6 +214,22 @@
                 });
                 tbody.innerHTML = html;
             } catch (e) { console.error("Error loading PDFs", e); }
+        }
+
+        async function removePdf(nombre) {
+            console.log("Borrando PDF:", nombre);
+            const confirmacion = confirm(`⚠️ ¿Estás segura de eliminar la imagen ${nombre}?\n\nEsta acción no se puede deshacer.`);
+            
+            if (!confirmacion) return;
+            
+            const res = await fetch('/api/borrar_archivos_descargas', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ archivos: [nombre] })
+            });
+            const data = await res.json();
+
+            cargarPdfs();
         }
 
         // 2. Cargar Impresoras (Una sola vez al inicio)
@@ -276,7 +309,7 @@
 
         // Init
         cargarPdfs();
-        setInterval(cargarPdfs, 5000); // Refrescar cada 5s
+        setInterval(cargarPdfs, 30000); // Refrescar cada 5s
 
         document.addEventListener("visibilitychange", () => {
             console.log(document.visibilityState);

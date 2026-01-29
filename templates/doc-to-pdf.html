@@ -77,6 +77,9 @@
                 status.innerHTML = "❌ Error de conexión";
             } finally {
                 btn.disabled = false;
+                await fetch('/api/remove_uploads', {
+                    method: 'POST'
+                });
             }
         }
     </script>

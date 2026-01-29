@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 
-                <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <div class="drop-zone drop-zone-pdf" onclick="document.getElementById('fileInput').click()">
                     <div class="drop-zone-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -41,10 +41,33 @@
                         <p class="drop-zone-title">Subir imagen o imagenes</p>
                         <span id="fileLabel">Toca para elegir archivos</span>
                     </div>
-                    <input type="file" id="fileInput" multiple style="display:none" onchange="updateLabel()">
+                    <input type="file" id="fileInput" multiple style="display:none" onchange="updateLabel()" accept="image/*">
+                </div>
+                  
+               <div class="image-to-pdf-list">
+                    <div class="image-to-pdf-item">
+                        <div class="image-to-pdf-left">
+                            <div class="image-to-pdf-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="image-to-pdf-name">
+                                    El libro de la vida
+                                </h3>
+                            </div>
+                        </div>
+                        <button class="image-to-pdf-remove">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-x-icon lucide-x">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-                <button class="btn btn--primary btn--convert" onclick="procesarArchivos()" id="btnProcesar">Convertir a
+                <button class="btn btn--primary btn--convert" style="display: none;" onclick="procesarArchivos()" id="btnProcesar">Convertir a
                     PDF</button>
                 <div class="loading" id="loadingMsg">⏳ Procesando... espera un momento</div>
 
@@ -67,6 +90,9 @@
         const btn = document.getElementById('btnProcesar');
         const msg = document.getElementById('loadingMsg');
         const fileLabel = document.getElementById('fileLabel');
+        const imgToPDFList = document.querySelector('.image-to-pdf-list');
+        const dropZonePDF = document.querySelector('.drop-zone-pdf');
+        let fileItems = [];
 
         btnRemove.addEventListener('click', function () {
             if (input.files.length === 0) return
@@ -75,9 +101,69 @@
             btn.disabled = true;
         });
 
+        function eliminarArchivo(indice) {
+            // 1. Lo sacamos de nuestro array
+            fileItems.splice(indice, 1);
+  
+            // 2. Creamos el contenedor para la nueva lista
+            const dataTransfer = new DataTransfer();
+            console.log(fileItems);
+            // 3. Agregamos los archivos restantes
+            fileItems.forEach(file => dataTransfer.items.add(file));
+
+            // 4. Sincronizamos con el input
+            input.files = dataTransfer.files;
+        }
+
+        function removeFile(index){
+            eliminarArchivo(index);
+            showListItems();
+            showButtonSubmit();
+        }
+
         function updateLabel() {
             const input = document.getElementById('fileInput');
+
+            fileItems = Array.from(input.files);
+        
             showLabelDinamic();
+            showListItems();
+            showButtonSubmit()
+        }
+
+        function showButtonSubmit(){
+            if (fileItems.length > 0){
+                btnProcesar.style.display = 'block';
+            } else{
+                btnProcesar.style.display = 'none';
+            }
+        }
+
+        function showListItems(){
+            if (fileItems.length > 0){
+                imgToPDFList.classList.add('active');
+                dropZonePDF.classList.add('hidden');
+            } else{
+                imgToPDFList.classList.remove('active');
+                dropZonePDF.classList.remove('hidden');
+            }
+
+            
+            imgToPDFList.innerHTML = ''
+ 
+            fileItems.forEach((file, index) => {
+                imgToPDFList.innerHTML += `
+                    <div class="image-to-pdf-item">
+                        <div class="image-to-pdf-left">
+                            <h3 class="image-to-pdf-name">${file.name}</h3>
+                        </div>
+                        <button class="image-to-pdf-remove" onclick="removeFile(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>   
+                    </div>
+                `;
+            });
+
         }
 
         function showLabelDinamic() {
@@ -87,8 +173,9 @@
 
         async function procesarArchivos() {
 
+            
             if (input.files.length === 0) return alert("Selecciona algo primero.");
-
+            
             // UI Feedback
             btn.disabled = true;
             msg.style.display = 'block';
@@ -98,7 +185,7 @@
             
             for (const file of input.files) {
                 formData.append('files[]', file);
-            }
+            }      
             formData.append('layout', layout.value);
             formData.append('position', position.value); // <--- Lo enviamos a Python
 
@@ -132,5 +219,7 @@
                 msg.style.display = 'none';
             }
         }
+
+        
     </script>
 {% endblock %}

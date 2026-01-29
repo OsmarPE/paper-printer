@@ -233,6 +233,11 @@ a {
     text-align: center;
     font-size: .875rem;
 }
+
+.drop-zone-pdf.hidden{
+    display: none;
+}
+
 .drop-zone-icon{
     width: 3.75rem;
     height: 3.75rem;
@@ -736,3 +741,70 @@ a {
     opacity: .5;
 }
 
+.image-to-pdf-list{
+    margin-top: 1rem;
+    display: none;
+    gap: 1rem;
+}
+
+.image-to-pdf-list.active{
+    display: grid;
+}
+
+.image-to-pdf-item{
+    background: white;
+    border-radius: 6px;
+    padding: .75rem;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    transition: all .4s ease;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.image-to-pdf-item:hover{
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.image-to-pdf-left{
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+}
+
+.image-to-pdf-icon{
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all .4s ease;
+}
+
+.image-to-pdf-icon svg{
+    width: 1rem;
+    height: 1rem;
+}
+
+.image-to-pdf-name{
+    font-size: .875rem;
+    font-weight: 500;
+}
+.image-to-pdf-remove{
+    width: 2rem;
+    height: 2rem;
+    color: rgba(0, 0, 0, 0.5);
+    transition: all .4s ease;
+}
+.image-to-pdf-remove svg{
+    width: 1rem;
+    height: 1rem;
+}
+
+.image-to-pdf-remove:hover{
+    color: black;
+}

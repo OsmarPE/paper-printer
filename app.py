@@ -208,7 +208,7 @@ def imprimir_silencioso(ruta_pdf, nombre_impresora):
 def pagina_impresoras():
     # Muestra el panel de gestión
     lista = obtener_impresoras()
-    return render_template('impresoras.html', impresoras=lista)
+    return render_template('prints.html', impresoras=lista)
 
 @app.route('/api/subir_y_imprimir', methods=['POST'])
 def api_subir_y_imprimir():
@@ -310,10 +310,10 @@ def obtener_imagenes_recientes():
 
 # --- RUTAS NUEVAS ---
 
-@app.route('/download')
+@app.route('/images')
 def ver_descargas():
     imagenes = obtener_imagenes_recientes()
-    return render_template('descargas.html', imagenes=imagenes)
+    return render_template('images.html', imagenes=imagenes)
 
 # ESTA RUTA ES CRUCIAL: Permite al HTML mostrar las imágenes de Windows
 @app.route('/cdn/descargas/<path:filename>')
@@ -501,7 +501,7 @@ def api_convertir_documento():
 # Ruta para servir la página (Frontend)
 @app.route('/doc-to-pdf')
 def pagina_documentos():
-    return render_template('documentos.html')
+    return render_template('doc-to-pdf.html')
 
 @app.route('/api/remove_uploads', methods=['POST'])
 def api_remove_uploads():
@@ -700,8 +700,8 @@ def api_identificar():
             
     return jsonify(resultado)
 
-@app.route('/analizador')
+@app.route('/analitic-type-img')
 def pagina_analizador():
-    return render_template('analizador.html')
+    return render_template('analitic-type-img.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
