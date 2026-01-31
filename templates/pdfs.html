@@ -13,14 +13,7 @@
         }
 
         .icon-pdf svg { width: 1.25rem; height: 1.25rem;}
-    
-        /* MODAL */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: white; padding: 30px; border-radius: 15px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
-        select, input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .btn-modal { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+       
         #listaPdfs{
             display: grid;
             /* grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); */
@@ -83,42 +76,48 @@
         <tr><td colspan="2" style="text-align:center; padding:20px;">Cargando...</td></tr>
     </div>
 
+ 
     <div class="modal-overlay" id="printModal">
-        <div class="modal">
-            <h2 style="margin-top:0;">🖨️ Configurar Impresión</h2>
-            <p id="archivoSeleccionado" style="color:#666; font-size:13px; word-break:break-all;"></p>
-            
-            <div class="form-group">
-                <label>Impresora:</label>
-                <select id="printerSelect">
-                    <option value="">Cargando impresoras...</option>
-                </select>
-            </div>
+    <div class="modal">
+        <h2 class="modal-title" id="modalPrinterName">Configurar Impresión</h2>
+        <p class="modal-text">Selecciona un archivo PDF para imprimir</p>
 
-            <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:1">
-                    <label>Copias:</label>
+        <div class="form-group">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex:1">
+                    <label class="form-label">Copias:</label>
                     <input type="number" id="copies" value="1" min="1">
                 </div>
-                <div class="form-group" style="flex:1">
-                    <label>Color:</label>
-                    <select id="colorMode">
-                        <option value="monochrome">⚫ B/N</option>
-                        <option value="color">🎨 Color</option>
+                <div style="flex:1">
+                    <label class="form-label">Color:</label>
+                    <select id="colorMode" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                        <option value="color">Color</option>
+                        <option value="monochrome">Blanco y Negro</option>
                     </select>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label>Páginas (Ej: 1-5):</label>
-                <input type="text" id="pages" placeholder="Todo">
+    
+            <div>
+                <label class="form-label">Tamaño de Papel:</label>
+                <select id="paperFormat" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
+                    <option value="Letter">Carta (Letter)</option>
+                    <option value="Legal">Oficio (Legal)</option>
+                    <option value="A4">A4 (Europeo)</option>
+                </select>
+            </div>
+    
+            <div>
+                <label class="form-label">Páginas (Ej: 1-3, 5):</label>
+                <input type="text" id="pages" placeholder="Dejar vacío para TODO">
             </div>
 
-            <button class="btn-modal" style="background:#2e7d32; color:white;" onclick="confirmarImpresion()">✅ Imprimir</button>
-            <button class="btn-modal" style="background:#ccc; margin-top:5px;" onclick="cerrarModal()">Cancelar</button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn--secondary" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn--primary" onclick="enviarImpresion()">Imprimir Ahora</button>
         </div>
     </div>
-
+</div>
     <script>
         let archivoActual = "";
         let impresorasCache = [];
@@ -255,7 +254,6 @@
 
         function abrirImpresion(nombre) {
             archivoActual = nombre;
-            document.getElementById('archivoSeleccionado').innerText = nombre;
             
             // Llenar select de impresoras
             const select = document.getElementById('printerSelect');
@@ -321,7 +319,6 @@
         // Lógica para abrir modal (pegamento visual)
         window.abrirImpresion = function(nombre) {
             archivoActual = nombre;
-            document.getElementById('archivoSeleccionado').innerText = nombre;
             document.getElementById('printModal').style.display = 'flex';
         }
     </script>

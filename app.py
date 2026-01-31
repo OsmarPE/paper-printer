@@ -703,5 +703,64 @@ def api_identificar():
 @app.route('/analitic-type-img')
 def pagina_analizador():
     return render_template('analitic-type-img.html')
+# Necesitarás importar 'base64' para decodificar la imagen que manda el navegador
+import base64
+
+# --- RUTAS DEL CREADOR LIBRE ---
+
+@app.route('/creador')
+def pagina_creador():
+    return render_template('creador.html')
+
+@app.route('/api/guardar_canvas_pdf', methods=['POST'])
+def api_guardar_canvas_pdf():
+    try:
+        data = request.json
+        # AHORA RECIBIMOS UNA LISTA DE IMÁGENES (Página 1, Página 2...)
+        pages_data = data.get('pagesData', []) 
+
+        if not pages_data:
+            return jsonify({"success": False, "error": "No hay páginas para guardar"}), 400
+
+        # Creamos el PDF
+        pdf = FPDF('P', 'mm', 'Letter')
+        pdf.set_auto_page_break(auto=False)
+
+        temp_files = [] # Para borrarlos al final
+
+        for index, image_data_str in enumerate(pages_data):
+            # 1. Limpiar base64
+            header, encoded = image_data_str.split(",", 1)
+            
+            # 2. Guardar imagen temporal única (page_0.png, page_1.png...)
+            nombre_temp = f"temp_page_{index}.png"
+            ruta_png_temp = os.path.join(app.config['UPLOAD_FOLDER'], nombre_temp)
+            
+            with open(ruta_png_temp, "wb") as f:
+                f.write(base64.b64decode(encoded))
+            
+            temp_files.append(ruta_png_temp)
+
+            # 3. Agregar al PDF
+            pdf.add_page()
+            # x=0, y=0, w=215.9 (Ancho carta exacto)
+            pdf.image(ruta_png_temp, x=0, y=0, w=215.9)
+
+        # 4. Guardar PDF final
+        ruta_pdf_final = os.path.join(app.config['UPLOAD_FOLDER'], "documento_creado.pdf")
+        pdf.output(ruta_pdf_final)
+
+        # 5. Limpieza de temporales
+        for f in temp_files:
+            try: os.remove(f)
+            except: pass
+        
+        return jsonify({"success": True, "pdf_url": f"/bajar_pdf/documento_creado.pdf"})
+
+    except Exception as e:
+        print(f"Error creador multipagina: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+    
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

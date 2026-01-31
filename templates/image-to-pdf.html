@@ -71,7 +71,7 @@
                     PDF</button>
                 <div class="loading" id="loadingMsg">⏳ Procesando... espera un momento</div>
 
-                <button id="btn-remove">
+                <button id="btn-remove" class="image-to-pdf-btn-remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-trash-icon lucide-trash">
@@ -96,10 +96,18 @@
 
         btnRemove.addEventListener('click', function () {
             if (input.files.length === 0) return
-            document.getElementById('fileInput').value = '';
-            showLabelDinamic();
-            btn.disabled = true;
+            resetInput();
         });
+        
+        function resetInput(){
+            input.value = '';
+            fileItems = [];
+            btn.disabled = false; 
+            fileItems = [];
+            showLabelDinamic();
+            showButtonSubmit();
+            showListItems();
+        }
 
         function eliminarArchivo(indice) {
             // 1. Lo sacamos de nuestro array
@@ -119,6 +127,7 @@
             eliminarArchivo(index);
             showListItems();
             showButtonSubmit();
+            showLabelDinamic();
         }
 
         function updateLabel() {
@@ -126,16 +135,18 @@
 
             fileItems = Array.from(input.files);
         
-            showLabelDinamic();
             showListItems();
             showButtonSubmit()
+            showLabelDinamic();
         }
 
         function showButtonSubmit(){
             if (fileItems.length > 0){
                 btnProcesar.style.display = 'block';
+                btnRemove.classList.add('active');
             } else{
                 btnProcesar.style.display = 'none';
+                btnRemove.classList.remove('active');
             }
         }
 
@@ -172,7 +183,8 @@
         }
 
         async function procesarArchivos() {
-
+            console.log(fileItems);
+            console.log(input.files);
             
             if (input.files.length === 0) return alert("Selecciona algo primero.");
             

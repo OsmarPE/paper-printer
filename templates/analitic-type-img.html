@@ -19,7 +19,9 @@
         .file-type { font-weight: bold; font-size: 18px; color: #333; }
         .file-msg { color: #666; margin-bottom: 20px; font-size: 14px; }
         
-        .options-panel { margin: 15px 0; text-align: left; background: white; padding: 10px; border-radius: 5px; border: 1px solid #ddd;}
+        .options-panel { 
+            margin: 1rem 0; 
+        }
         
         .btn-convert { background: #4CAF50; color: white; }
         .btn-convert:hover { background: #388E3C; }
@@ -57,6 +59,11 @@
         .card-analitic-btn,.card-analitic-btn-pdf{
             width: 100%;
         }
+
+        .card-analitic-btn:disabled{
+            opacity: .5;
+        }
+
         .card-analitic-btn-pdf{
             display: none;
         }
@@ -72,28 +79,20 @@
         <h2 class="card-title">Analizador Universal de Archivos</h2>
         <p class="card-description">Sube el archivo para identificarlo y convertirlo a PDF.</p>
 
-        <button class="btn btn--secondary card-analitic-btn" onclick="document.getElementById('fileInput').click()">
+        <button class="btn btn--secondary card-analitic-btn" id="btn-upload">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
             Subir Archivo
         </button>
         
         <input type="file" id="fileInput" style="display:none" onchange="analizarArchivo()">
-        <div id="resultArea" class="result-box">
-            <span class="big-icon" id="resIcon">❓</span>
-            <div class="file-type" id="resType">Analizando...</div>
-            <p class="file-msg" id="resMsg">...</p>
-
-            <div id="imageOptions" style="display:none;" class="options-panel">
-                <label style="font-size:12px; font-weight:bold;">Ajuste de Imagen:</label>
-                <select id="layoutConfig" style="width:100%; padding:5px; margin-top:5px;">
-                    <option value="full">📄 Carta Completa</option>
-                    <option value="half">✂️ Media Carta</option>
-                    <option value="id_card">🪪 Credencial</option>
-                </select>
-            </div>
-
-        
-        </div>
+        <div id="imageOptions" class="options-panel">
+            <label class="form-label">Tamaño de impresión:</label>
+            <select id="layoutConfig" class="form-select" >
+                <option value="full">Carta Completa</option>
+                <option value="half">Media Carta</option>
+                <option value="id_card">Credencial</option>
+            </select>
+        </div> 
             <ul class="card-analitic">
                 <li class="card-analitic-item" >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
@@ -131,18 +130,28 @@
         const type = document.getElementById('fileType');
         const size = document.getElementById('fileSize');   
         const compatible = document.getElementById('fileCompatible');
+        const btnUpload = document.getElementById('btn-upload');
+        const fileInput = document.getElementById('fileInput')
+        const imageOptions = document.getElementById('imageOptions');
 
         const actionsAnalitic = document.querySelector('.card-analitic-actions');
         const cardAnalitic = document.querySelector('.card-analitic');
 
+        btnUpload.addEventListener('click', function () {
+            fileInput.click();
+        });
+
         async function analizarArchivo() {
             const input = document.getElementById('fileInput');
             if (input.files.length === 0) return;
-
+            const btn = document.getElementById('btnAction');
             // UI Feedback
             //document.getElementById('labelFile').innerText = "⏳ Identificando...";
             //document.getElementById('resultArea').style.display = 'none';
             cardAnalitic.classList.remove('active');
+            btn.disabled = true;
+            btn.style.display = 'none';
+            changeStatusBtnUpload(true);
 
             const formData = new FormData();
             formData.append('file', input.files[0]);
@@ -156,7 +165,29 @@
                 //document.getElementById('labelFile').innerText = "✅ " + input.files[0].name;
 
             } catch (e) {
+                console.error(e);
                 alert("Error analizando archivo");
+            } finally{
+               
+                changeStatusBtnUpload(false);
+            }
+        }
+
+        function changeStatusBtnUpload(status = false){
+            if (status){
+                btnUpload.disabled = true;
+                btnUpload.style.display = 'none';
+                btnUpload.innerHTML = `
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+                    Cargando...
+                `;
+            } else {
+                btnUpload.disabled = false;
+                btnUpload.style.display = 'flex';
+                btnUpload.innerHTML = `
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-input-icon lucide-file-input"><path d="M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+                    Subir Archivo
+                `;
             }
         }
 
@@ -172,17 +203,20 @@
             compatible.innerText = data.convertible ? "SI" : "NO";
 
             // Llenar datos visuales
-            document.getElementById('resIcon').innerText = data.icon;
-            document.getElementById('resType').innerText = data.desc;
-            document.getElementById('resMsg').innerText = data.msg;
 
             // Lógica de botones
             if (data.convertible) {
                 btn.style.display = 'block';
                 actionsAnalitic.style.display = 'grid';
+                btn.disabled = false;
+                btn.style.display = 'block';
+                imageOptions.classList.add('active');
             } else {
                 btn.style.display = 'none';
                 actionsAnalitic.style.display = 'none';
+                btn.disabled = true;
+                btn.style.display = 'none';
+                imageOptions.classList.remove('active');
             }
 
             // Si es imagen, mostrar opciones de tamaño
@@ -195,7 +229,6 @@
             // Mostrar todo
             //area.style.display = 'block';
             cardAnalitic.classList.add('active');
-            document.getElementById('btnReset').style.display = 'block';
         }
 
         async function ejecutarConversion() {

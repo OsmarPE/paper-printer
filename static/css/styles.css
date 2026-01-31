@@ -275,7 +275,7 @@ a {
 }
 
 
-#btn-remove{
+.image-to-pdf-btn-remove{
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 4px;
@@ -288,10 +288,10 @@ a {
     margin-left: auto;
     margin-top: 1rem;
 }
-#btn-remove svg{
+.image-to-pdf-btn-remove svg{
     width: 1.25rem;
 }
-#btn-remove:hover {
+.image-to-pdf-btn-remove:hover {
     background-color: rgba(194, 123, 92, 0.1);
 }
   
@@ -774,6 +774,14 @@ a {
     gap: .875rem;
 }
 
+.image-to-pdf-btn-remove{
+    display: none;
+}
+
+.image-to-pdf-btn-remove.active{
+    display: block;
+}
+
 .image-to-pdf-icon{
     width: 2.5rem;
     height: 2.5rem;
@@ -807,4 +815,12 @@ a {
 
 .image-to-pdf-remove:hover{
     color: black;
+}
+
+.options-panel{
+    display: none;
+}
+
+.options-panel.active{
+    display: block;
 }
